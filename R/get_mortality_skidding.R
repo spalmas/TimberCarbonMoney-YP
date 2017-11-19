@@ -22,10 +22,10 @@
 #' y <- 20
 #' w.dist <- 5
 #' harvested <- get.harvest(stand, intensity)
-#' inside.small <- skidding.mortality(stand = stand, w.dist = w.dist, harvested = harvested)
+#' inside.small <- get.mortality.skidding(stand = stand, w.dist = w.dist, harvested = harvested)
 #' inside.small
 #' killed.trees <- stand[inside.small,]
-skidding.mortality <- function(forest, w.dist, harvested, skidder = 'Skidder'){
+get.mortality.skidding <- function(forest, w.dist, harvested, skidder = 'Skidder'){
   #creates an empty array of FALSE with the length of the stand
   inside <- rep(x = c(FALSE), times = nrow(forest))
   inside.small <- inside

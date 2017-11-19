@@ -19,10 +19,10 @@
 #' harvested.list <- get.harvest(forest = forest, intensity = 'All', ACA. = 0)
 #' harvested <- forest[harvested.list,]
 #' forest <- forest[!harvested.list,]
-#' killed.directional <- directional.mortality(forest = forest, harvested = harvested)
+#' killed.directional <- get.mortality.DF(forest = forest, harvested = harvested)
 #' killed.directional
 #' killed.trees <- forestkilled.directional,]
-directional.mortality <- function(forest, harvested, dir.felling = FALSE){
+get.mortality.DF <- function(forest, harvested, dir.felling = FALSE){
   vecinity <- rep(x = c(FALSE), times = nrow(forest)) #empty vector
   
   if(!dir.felling){
