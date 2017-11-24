@@ -2,7 +2,6 @@
 #'
 #' Original simulator_full used for dissertation chapter
 #' 
-#'
 #' @param forest.tab Forest list of trees
 #' @param scenario text name of scenario
 #' @param sy total simulation years
@@ -10,37 +9,35 @@
 #' @param area Area of plot to be simulated in ha.
 #' @param dir.felling TRUE/FALSE if directional felling is employed
 #' @param enrich.bosquete The ejido performs enrichment bosquete planting (TRUE or FALSE)
-#' @param intensity Logging intensity. Percentage of trees harvested from that ACA
+#' @param intensity Logging intensity. Cubic meters per hectare inside ACA
 #' @param skidder type of skidder used. 'Skidder' (Treefarmer) or 'MAT' (Modifed Agricultural Tractor)
 #' @param rotation rotation period of forest. Also the number of ACA areas of one hectare
-#' @param w.dist set to 25m
+#' @param w.dist Winching distance. Using 27 m from RIL studies or 0 if none is used
 #'
-#' @references Ninguna por ahora
+#' @references Timber-Carbon-Money Paper
 #' 
-#' @return a table with yearly results of harvested and biomass values
+#' @return a table with yearly results of Timber, Carbon and Money values
 #' 
 #' @examples
 #' source('startup.R')
 #' forest.tab <- forest.randomizer(ROTATIONYEARS = rotation)
 #' table.results <- simulator(sy = 50, 
 #'     it = 3,
-#'     intensity = 'Highest',
 #'     enrich.bosquete = FALSE, 
 #'     w.dist = 0, 
 #'     dir.felling  = FALSE, 
-#'     forest.tab  = forest.tab,
-#'     area = 1500)
+#'     forest.tab  = forest.tab)
 #' View(table.results)
 #'
 simulator <- function(forest.tab,
                       scenario = 'A',
                       sy, 
                       it,
-                      area = 1,   #
+                      area = 1,
                       dir.felling = TRUE, 
                       enrich.bosquete = FALSE, 
-                      intensity,
-                      skidder = c('Skidder'),
+                      intensity = 10,       #Average from RIL-C Mexico paper
+                      skidder = 'Skidder',
                       rotation = 25, 
                       w.dist = 0){ 
   
@@ -66,16 +63,16 @@ simulator <- function(forest.tab,
     #Random
     forest$ACA <- sample(forest$ACA, replace = TRUE)
     
-    #AGB0 is the mean of the ACA AGB. Not by hectare
+    #C0 is the mean of the ACA C. Not by hectare
     forest.parameters <- forest %>% 
       group_by(ACA) %>% 
       summarise(BA = sum(pi * (DBH^2/40000), na.rm = TRUE),
-                AGB = sum(AGB, na.rm = TRUE)) %>% 
+                Carbon = sum(Carbon, na.rm = TRUE)) %>% 
       summarise(BA = mean(BA),
-                AGB = mean(AGB))
+                Carbon = mean(Carbon))
     
     BA0 <- forest.parameters$BA[1]
-    AGB0 <- forest.parameters$AGB[1]
+    Carbon0 <- forest.parameters$Carbon[1]
     
     ACA <- 0 #reset ACA
     
@@ -113,10 +110,10 @@ simulator <- function(forest.tab,
       
       ####### DO SKIDDING MORTALITY
       #Should be in hectare basis because harvested only comes from one ACA
-      skidding.dead.bool <- skidding.mortality(forest = forest, w.dist = w.dist, harvested = harvested)  ##kills inside area and small trees (< 20cm DBH)
+      skidding.dead.bool <- get.mortality.skidding(forest = forest, w.dist = w.dist, harvested = harvested)  ##kills inside area and small trees (< 20cm DBH)
       
       ####### HAVE DIRECTIONAL MORTALITY OF dir.felling is FALSE
-      directional.dead.bool <- directional.mortality(forest = forest, harvested = harvested, dir.felling = dir.felling)    #directinonal felling mortality
+      directional.dead.bool <- get.mortality.DF(forest = forest, harvested = harvested, dir.felling = dir.felling)    #directinonal felling mortality
       
       #Removing all killed trees from the forest
       forest <- forest[!(harvested.bool | skidding.dead.bool | directional.dead.bool),]
@@ -130,15 +127,15 @@ simulator <- function(forest.tab,
         forest <- forest %>% bind_rows(enrichment.table)  #adding the new trees to the stand
       }
       
-      ####### BIOMASS PER HECTARE (AT THE END OF MORTALITY, RECRUITMENT AND HARVEST)
-      forest$AGB <- get.agb(forest = forest) #a new estiamate of biomass. Not by hectare
+      ####### CARBON PER HECTARE (AT THE END OF MORTALITY, RECRUITMENT AND HARVEST)
+      forest$C <- get.C(forest = forest) #a new estiamate of biomass. Not by hectare
       
       ####### computing final forest values. Unit: area. These are NOT corrected to HA
       forest.parameters <- forest %>% group_by(ACA) %>% 
         summarise(BA = sum(pi * (DBH^2/40000), na.rm = TRUE),
-                  AGB = sum(AGB, na.rm = TRUE)) %>% 
+                  Carbon = sum(Carbon, na.rm = TRUE)) %>% 
         summarise(BA = mean(BA),
-                  AGB = mean(AGB))
+                  Carbon = mean(Carbon))
       
       ####### Storing stand results. They should by hectare units
       table.results[row.num, 'N.HARVESTED'] <- nrow(harvested) * CF  #Number of extracted trees
@@ -146,13 +143,13 @@ simulator <- function(forest.tab,
       table.results[row.num, 'BA0'] <- BA0 * CF  # by hectare
       table.results[row.num, 'AGB0'] <- AGB0 * CF #by hectare
       table.results[row.num, 'BA1'] <- forest.parameters$BA[1] * CF  #Mean of ACA values by hectare
-      table.results[row.num, 'AGB1'] <- forest.parameters$AGB[1] * CF #by hectare
+      table.results[row.num, 'Carbon1'] <- forest.parameters$Carbon[1] * CF #by hectare
       table.results[row.num, 'EMISSIONS'] <- emissions.operations * CF  #Estimate biomass from the stand harvest by hectare
       #table.results$N.TREES.DEAD[row.num] <- CF * n.trees.dead/rotation  #Total number of deaths in year by hectare
 
       ####### UPDATING VALUES
       BA0 <- forest.parameters$BA[1]
-      AGB0 <- forest.parameters$AGB[1]
+      Carbon0 <- forest.parameters$Carbon[1]
       ACA <- ACA + 1 
     }  
   }
