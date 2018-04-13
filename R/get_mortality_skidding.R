@@ -8,6 +8,7 @@
 #' @param stand The table of trees in the stand
 #' @param w.dist The winching distance that was input in the simulation
 #' @param harvested table of harvested trees
+#' @param skidder Type of skidder used: 'Skidder' or 'MAT'
 #'
 #' @references
 #' Ninguna por ahora
@@ -30,9 +31,8 @@ get.mortality.skidding <- function(forest, w.dist, harvested, skidder = 'Skidder
   inside <- rep(x = c(FALSE), times = nrow(forest))
   inside.small <- inside
   
-    if (skidder == 'MAT'){half.width.skidder <- 1} else {half.width.skidder <- 2} #Skidder width = 4, MAT width = 2
+  if (skidder == 'MAT'){half.width.skidder <- 1} else {half.width.skidder <- 2} #Skidder width = 4, MAT width = 2
   half.width.skidder <- 2 #half with of skidder or MAT.
-  
   
   if (nrow(harvested) != 0){    #If there are trees harvested
     for (i in 1:nrow(harvested)){    #For each harvested tree
@@ -49,7 +49,6 @@ get.mortality.skidding <- function(forest, w.dist, harvested, skidder = 'Skidder
   
   #only cutting those that are inside the rctantgle and are small trees  
   inside.small <- inside & (forest$DBH < 20)
-    
   }
 
   #remove trees that were inside rectangles
