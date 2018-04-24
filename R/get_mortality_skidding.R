@@ -7,7 +7,7 @@
 #'
 #' @param stand The table of trees in the stand
 #' @param w.dist The winching distance that was input in the simulation
-#' @param harvested table of harvested trees
+#' @param harvested.table table of harvested trees
 #' @param skidder Type of skidder used: 'Skidder' or 'MAT'
 #'
 #' @references
@@ -16,17 +16,12 @@
 #' @return an array of boolean values: TRUE: the tree is inside the rectangle and FALSE if not.
 #'
 #' @examples
-#' source('startup.R')
-#' stand <- stand.randomizer()
-#' intensity <- 'Normal'
-#' rotation <- 20
-#' y <- 20
-#' w.dist <- 5
-#' harvested <- get.harvest(stand, intensity)
-#' inside.small <- get.mortality.skidding(stand = stand, w.dist = w.dist, harvested = harvested)
-#' inside.small
-#' killed.trees <- stand[inside.small,]
-get.mortality.skidding <- function(forest, w.dist, harvested, skidder = 'Skidder'){
+#' forest <- forest.randomizerINFyS(seed = 16)   #8
+#' harvested <- forest[get.harvest(forest, ACA. = 1),]
+#' harvested
+#' inside.small <- get.mortality.skidding(forest = forest, harvested = harvested)
+#' forest[inside.small,]
+get.mortality.skidding <- function(forest, w.dist = 5, harvested.table, skidder = 'Skidder'){
   #creates an empty array of FALSE with the length of the stand
   inside <- rep(x = c(FALSE), times = nrow(forest))
   inside.small <- inside
